@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Staf Pengadaan - Procurement ITK</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .sidebar { background: linear-gradient(180deg, #3b0764 0%, #4c1d95 50%, #5b21b6 100%); }
+    .btn-primary { background: linear-gradient(135deg, #7c3aed, #5b21b6); transition: all 0.3s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(124,58,237,0.4); }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(15px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex">
+
+  <!-- Sidebar -->
+  <div class="sidebar w-64 min-h-screen flex flex-col fixed left-0 top-0 z-20">
+    <div class="p-6 border-b border-white border-opacity-10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-white bg-opacity-20 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-white font-bold text-sm">Procurement ITK</p>
+          <p class="text-purple-300 text-xs">Staf Pengadaan</p>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 p-4">
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-xl text-white bg-white bg-opacity-20 mb-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+        <span class="text-sm font-medium">Purchase Order</span>
+      </a>
+    </nav>
+    <div class="p-4 border-t border-white border-opacity-10">
+      <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-300 hover:bg-red-500 hover:bg-opacity-20 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        <span class="text-sm font-medium">Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="ml-64 flex-1 p-8">
+    <div class="mb-8 fade-in">
+      <h1 class="text-3xl font-bold text-gray-800">Dashboard Staf Pengadaan</h1>
+      <p class="text-gray-500 mt-1">Buat Purchase Order dari PR yang disetujui</p>
+    </div>
+
+    <!-- PR Disetujui -->
+    <div class="bg-white rounded-2xl shadow-sm p-8 mb-6 fade-in">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">PR Disetujui — Siap Dibuat PO</h2>
+      <div id="listPR"><p class="text-gray-400 text-sm">Memuat data...</p></div>
+    </div>
+
+    <!-- Form PO -->
+    <div id="formPO" class="bg-white rounded-2xl shadow-sm p-8 mb-6 fade-in" style="display:none">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">Buat Purchase Order</h2>
+      <input type="hidden" id="selectedPR">
+      <div class="grid grid-cols-2 gap-6 mb-6">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Supplier</label>
+          <input id="nama_supplier" type="text" placeholder="contoh: PT Sumber Jaya"
+            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 transition">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Total Harga (Rp)</label>
+          <input id="total_harga" type="number" placeholder="contoh: 50000000"
+            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 transition">
+        </div>
+      </div>
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Tanggal Pengiriman</label>
+        <input id="tgl_kirim" type="date"
+          class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 transition">
+      </div>
+      <div class="flex gap-3 items-center">
+        <button onclick="buatPO()" class="btn-primary text-white px-8 py-3 rounded-xl font-semibold">Buat PO →</button>
+        <button onclick="tutupForm()" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition">Batal</button>
+        <p id="pesanPO" class="text-sm"></p>
+      </div>
+    </div>
+
+    <!-- Riwayat PO -->
+    <div class="bg-white rounded-2xl shadow-sm p-8 fade-in">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">Riwayat Purchase Order</h2>
+      <div id="listPO"><p class="text-gray-400 text-sm">Memuat data...</p></div>
+    </div>
+  </div>
+
+  <script>
+    const { createClient } = supabase
+    const sb = createClient(
+      'https://bgtgeltkbanlnvymalum.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJndGdlbHRrYmFubG52eW1hbHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTAwNDksImV4cCI6MjA5NTA4NjA0OX0.-JlapeQpug44SjkEKgb1wyoX2_ftdGGcAnTHJhdzvwE'
+    )
+    async function cekLogin() {
+      const { data } = await sb.auth.getSession()
+      if (!data.session) { window.location.href = 'index.html'; return }
+      muatPR(); muatPO()
+    }
+    async function muatPR() {
+      const { data } = await sb.from('purchase_request').select('*')
+        .eq('status', 'disetujui').order('created_at', { ascending: false })
+      const container = document.getElementById('listPR')
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm">Tidak ada PR yang sudah disetujui.</p>'
+        return
+      }
+      container.innerHTML = data.map(pr => `
+        <div class="flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl mb-3 hover:border-purple-200 transition">
+          <div>
+            <p class="font-semibold text-gray-800">${pr.nama_barang}</p>
+            <p class="text-sm text-gray-500 mt-1">Jumlah: ${pr.jumlah} unit · ${pr.spesifikasi}</p>
+          </div>
+          <button onclick="bukaForm('${pr.id}')"
+            class="btn-primary text-white px-5 py-2 rounded-xl text-sm font-semibold">
+            + Buat PO
+          </button>
+        </div>
+      `).join('')
+    }
+    async function muatPO() {
+      const { data } = await sb.from('purchase_order').select('*').order('created_at', { ascending: false })
+      const container = document.getElementById('listPO')
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm">Belum ada PO dibuat.</p>'
+        return
+      }
+      container.innerHTML = data.map(po => `
+        <div class="flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl mb-3">
+          <div>
+            <p class="font-semibold text-gray-800">${po.nama_supplier}</p>
+            <p class="text-sm text-gray-500 mt-1">Rp ${parseInt(po.total_harga).toLocaleString('id-ID')} · Kirim: ${po.tgl_kirim}</p>
+          </div>
+          <span class="text-xs font-bold px-4 py-2 rounded-full bg-purple-100 text-purple-700">${po.status.toUpperCase()}</span>
+        </div>
+      `).join('')
+    }
+    function bukaForm(prId) {
+      document.getElementById('selectedPR').value = prId
+      document.getElementById('formPO').style.display = 'block'
+      document.getElementById('formPO').scrollIntoView({ behavior: 'smooth' })
+    }
+    function tutupForm() { document.getElementById('formPO').style.display = 'none' }
+    async function buatPO() {
+      const prId = document.getElementById('selectedPR').value
+      const supplier = document.getElementById('nama_supplier').value
+      const harga = document.getElementById('total_harga').value
+      const tgl = document.getElementById('tgl_kirim').value
+      const pesan = document.getElementById('pesanPO')
+      if (!supplier || !harga || !tgl) {
+        pesan.textContent = '⚠️ Semua kolom wajib diisi!'
+        pesan.className = 'text-red-500 text-sm'
+        return
+      }
+      const { error } = await sb.from('purchase_order').insert({
+        pr_id: prId, nama_supplier: supplier,
+        total_harga: parseFloat(harga), tgl_kirim: tgl, status: 'diajukan'
+      })
+      if (error) {
+        pesan.textContent = '❌ Gagal: ' + error.message
+        pesan.className = 'text-red-500 text-sm'
+      } else {
+        pesan.textContent = '✅ PO berhasil dibuat!'
+        pesan.className = 'text-green-600 text-sm'
+        tutupForm(); muatPO()
+      }
+    }
+    async function logout() {
+      await sb.auth.signOut()
+      window.location.href = 'index.html'
+    }
+    cekLogin()
+  </script>
+</body>
+</html>
