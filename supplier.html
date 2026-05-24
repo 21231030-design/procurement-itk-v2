@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Supplier - Procurement ITK</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .sidebar { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(15px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex">
+
+  <!-- Sidebar -->
+  <div class="sidebar w-64 min-h-screen flex flex-col fixed left-0 top-0 z-20">
+    <div class="p-6 border-b border-white border-opacity-10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-white bg-opacity-20 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-white font-bold text-sm">Procurement ITK</p>
+          <p class="text-slate-300 text-xs">Portal Supplier</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="flex-1 p-4">
+      <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3 px-3">Menu</p>
+      <a href="#po" class="flex items-center gap-3 px-3 py-3 rounded-xl text-white bg-white bg-opacity-20 mb-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
+        </svg>
+        <span class="text-sm font-medium">Purchase Order</span>
+      </a>
+      <a href="#invoice" class="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-300 hover:bg-white hover:bg-opacity-10 mb-2 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+        </svg>
+        <span class="text-sm font-medium">Invoice</span>
+      </a>
+    </nav>
+
+    <div class="p-4 border-t border-white border-opacity-10">
+      <div class="px-3 py-2 mb-2">
+        <p class="text-slate-400 text-xs">Login sebagai</p>
+        <p class="text-white text-sm font-semibold truncate" id="emailSupplier">-</p>
+      </div>
+      <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-300 hover:bg-red-500 hover:bg-opacity-20 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        <span class="text-sm font-medium">Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="ml-64 flex-1 p-8">
+
+    <div class="mb-8 fade-in">
+      <h1 class="text-3xl font-bold text-gray-800">Portal Supplier</h1>
+      <p class="text-gray-500 mt-1">Lihat Purchase Order dan status Invoice dari ITK</p>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-5 mb-8 fade-in flex items-start gap-4">
+      <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="font-semibold text-blue-800">Mode Hanya Lihat</p>
+        <p class="text-blue-600 text-sm mt-1">Sebagai supplier, Anda hanya dapat melihat data Purchase Order dan Invoice dari ITK. Tidak ada aksi yang dapat dilakukan.</p>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-6 mb-8 fade-in">
+      <div class="bg-white rounded-2xl p-6 card-hover shadow-sm border-l-4 border-slate-400">
+        <p class="text-3xl font-bold text-gray-800" id="jmlPO">-</p>
+        <p class="text-gray-500 text-sm mt-1">Total Purchase Order</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 card-hover shadow-sm border-l-4 border-yellow-400">
+        <p class="text-3xl font-bold text-gray-800" id="jmlBelumLunas">-</p>
+        <p class="text-gray-500 text-sm mt-1">Invoice Belum Lunas</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 card-hover shadow-sm border-l-4 border-green-400">
+        <p class="text-3xl font-bold text-gray-800" id="jmlLunas">-</p>
+        <p class="text-gray-500 text-sm mt-1">Invoice Lunas</p>
+      </div>
+    </div>
+
+    <!-- Daftar PO -->
+    <div id="po" class="bg-white rounded-2xl shadow-sm p-8 mb-6 fade-in">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-800">Daftar Purchase Order</h2>
+        <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium">👁 Hanya Lihat</span>
+      </div>
+      <div id="listPO"><p class="text-gray-400 text-sm">Memuat data...</p></div>
+    </div>
+
+    <!-- Daftar Invoice -->
+    <div id="invoice" class="bg-white rounded-2xl shadow-sm p-8 fade-in">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-800">Daftar Invoice</h2>
+        <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium">👁 Hanya Lihat</span>
+      </div>
+      <div id="listInvoice"><p class="text-gray-400 text-sm">Memuat data...</p></div>
+    </div>
+
+  </div>
+
+  <script>
+    const { createClient } = supabase
+    const sb = createClient(
+      'https://bgtgeltkbanlnvymalum.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJndGdlbHRrYmFubG52eW1hbHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTAwNDksImV4cCI6MjA5NTA4NjA0OX0.-JlapeQpug44SjkEKgb1wyoX2_ftdGGcAnTHJhdzvwE'
+    )
+
+    async function cekLogin() {
+      const { data } = await sb.auth.getSession()
+      if (!data.session) { window.location.href = 'index.html'; return }
+      document.getElementById('emailSupplier').textContent = data.session.user.email
+      muatPO()
+      muatInvoice()
+    }
+
+    async function muatPO() {
+      const { data } = await sb.from('purchase_order').select('*')
+        .order('created_at', { ascending: false })
+
+      document.getElementById('jmlPO').textContent = data ? data.length : 0
+
+      const container = document.getElementById('listPO')
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div class="text-center py-8"><p class="text-gray-400">Belum ada Purchase Order.</p></div>'
+        return
+      }
+
+      container.innerHTML = data.map(po => `
+        <div class="flex items-center justify-between p-5 border-2 border-gray-100 rounded-xl mb-3 hover:border-slate-300 transition">
+          <div>
+            <p class="font-semibold text-gray-800">${po.nama_supplier}</p>
+            <p class="text-sm text-gray-500 mt-1">Total: <span class="font-semibold text-gray-700">Rp ${parseInt(po.total_harga).toLocaleString('id-ID')}</span></p>
+            <p class="text-sm text-gray-500">Tanggal Kirim: ${po.tgl_kirim}</p>
+            <p class="text-xs text-gray-400 mt-1">${new Date(po.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'})}</p>
+          </div>
+          <span class="text-xs font-bold px-4 py-2 rounded-full bg-blue-100 text-blue-700">
+            ${po.status.toUpperCase()}
+          </span>
+        </div>
+      `).join('')
+    }
+
+    async function muatInvoice() {
+      const { data } = await sb.from('invoice').select('*')
+        .order('created_at', { ascending: false })
+
+      if (data) {
+        document.getElementById('jmlBelumLunas').textContent = data.filter(x => x.status_bayar === 'belum_lunas').length
+        document.getElementById('jmlLunas').textContent = data.filter(x => x.status_bayar === 'lunas').length
+      }
+
+      const container = document.getElementById('listInvoice')
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div class="text-center py-8"><p class="text-gray-400">Belum ada Invoice.</p></div>'
+        return
+      }
+
+      container.innerHTML = data.map(inv => `
+        <div class="flex items-center justify-between p-5 border-2 border-gray-100 rounded-xl mb-3 hover:border-slate-300 transition">
+          <div>
+            <p class="font-semibold text-gray-800">${inv.nama_supplier}</p>
+            <p class="text-sm text-gray-500 mt-1">Tagihan: <span class="font-semibold text-gray-700">Rp ${parseInt(inv.jumlah_tagihan).toLocaleString('id-ID')}</span></p>
+            <p class="text-xs text-gray-400 mt-1">${new Date(inv.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'})}</p>
+          </div>
+          <span class="text-xs font-bold px-4 py-2 rounded-full ${inv.status_bayar === 'lunas' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+            ${inv.status_bayar === 'lunas' ? '✅ LUNAS' : '⏳ BELUM LUNAS'}
+          </span>
+        </div>
+      `).join('')
+    }
+
+    async function logout() {
+      await sb.auth.signOut()
+      window.location.href = 'index.html'
+    }
+
+    cekLogin()
+  </script>
+</body>
+</html>
