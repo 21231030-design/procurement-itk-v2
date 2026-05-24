@@ -25,7 +25,6 @@
 </head>
 <body class="gradient-bg min-h-screen flex items-center justify-center overflow-hidden relative">
 
-  <!-- Floating shapes -->
   <div class="absolute top-20 left-20 w-32 h-32 rounded-full glass float opacity-50"></div>
   <div class="absolute bottom-20 right-20 w-48 h-48 rounded-full glass float2 opacity-30"></div>
   <div class="absolute top-1/2 left-10 w-20 h-20 rounded-full glass float opacity-40"></div>
@@ -33,10 +32,10 @@
 
   <div class="card rounded-3xl shadow-2xl p-10 w-full max-w-md mx-4 fade-in relative z-10">
     <div class="text-center mb-8">
-      <div class="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center" 
+      <div class="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center"
            style="background: linear-gradient(135deg, #667eea, #764ba2)">
         <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
       </div>
@@ -74,30 +73,40 @@
       'https://bgtgeltkbanlnvymalum.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJndGdlbHRrYmFubG52eW1hbHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTAwNDksImV4cCI6MjA5NTA4NjA0OX0.-JlapeQpug44SjkEKgb1wyoX2_ftdGGcAnTHJhdzvwE'
     )
+
     async function login() {
       const email = document.getElementById('email').value
       const pass = document.getElementById('password').value
       const pesan = document.getElementById('pesan')
+
       if (!email || !pass) {
         pesan.textContent = '⚠️ Email dan password wajib diisi!'
         pesan.className = 'text-red-500 text-sm text-center mt-4'
         return
       }
+
       pesan.textContent = '⏳ Memproses...'
       pesan.className = 'text-purple-500 text-sm text-center mt-4'
+
       const { data, error } = await sb.auth.signInWithPassword({ email, password: pass })
+
       if (error) {
         pesan.textContent = '❌ Login gagal! ' + error.message
         pesan.className = 'text-red-500 text-sm text-center mt-4'
         return
       }
-      const { data: profile } = await sb.from('profiles').select('role').eq('id', data.user.id).single()
+
+      const { data: profile } = await sb
+        .from('profiles').select('role').eq('id', data.user.id).single()
+
       const role = profile?.role
       if (role === 'manajer') location.href = 'manajer.html'
       else if (role === 'staf_pengadaan') location.href = 'staf-pengadaan.html'
       else if (role === 'staf_keuangan') location.href = 'staf-keuangan.html'
+      else if (role === 'supplier') location.href = 'supplier.html'
       else location.href = 'user.html'
     }
+
     document.addEventListener('keydown', e => { if (e.key === 'Enter') login() })
   </script>
 </body>
