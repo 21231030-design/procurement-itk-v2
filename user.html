@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard User - Procurement ITK</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .sidebar { background: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%); }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .btn-submit { background: linear-gradient(135deg, #667eea, #764ba2); transition: all 0.3s; }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(15px); } to { opacity:1; transform:translateY(0); } }
+    .status-menunggu { background:#fef3c7; color:#d97706; }
+    .status-disetujui { background:#d1fae5; color:#059669; }
+    .status-ditolak { background:#fee2e2; color:#dc2626; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex">
+
+  <!-- Sidebar -->
+  <div class="sidebar w-64 min-h-screen flex flex-col fixed left-0 top-0 z-20">
+    <div class="p-6 border-b border-white border-opacity-10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-white bg-opacity-20 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-white font-bold text-sm">Procurement ITK</p>
+          <p class="text-purple-300 text-xs">Sistem Pengadaan</p>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 p-4">
+      <p class="text-purple-300 text-xs font-semibold uppercase tracking-wider mb-3 px-3">Menu</p>
+      <a href="#form" class="flex items-center gap-3 px-3 py-3 rounded-xl text-white bg-white bg-opacity-20 mb-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span class="text-sm font-medium">Ajukan PR</span>
+      </a>
+      <a href="#riwayat" class="flex items-center gap-3 px-3 py-3 rounded-xl text-purple-200 hover:bg-white hover:bg-opacity-10 mb-2 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+        <span class="text-sm font-medium">Riwayat</span>
+      </a>
+    </nav>
+    <div class="p-4 border-t border-white border-opacity-10">
+      <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-300 hover:bg-red-500 hover:bg-opacity-20 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        <span class="text-sm font-medium">Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="ml-64 flex-1 p-8">
+    <!-- Header -->
+    <div class="mb-8 fade-in">
+      <h1 class="text-3xl font-bold text-gray-800">Dashboard User</h1>
+      <p class="text-gray-500 mt-1">Ajukan dan pantau purchase request kamu</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-6 mb-8 fade-in">
+      <div class="bg-white rounded-2xl p-6 card-hover shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-gray-800" id="statMenunggu">0</p>
+        <p class="text-gray-500 text-sm mt-1">Menunggu</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 card-hover shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-gray-800" id="statDisetujui">0</p>
+        <p class="text-gray-500 text-sm mt-1">Disetujui</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 card-hover shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-gray-800" id="statDitolak">0</p>
+        <p class="text-gray-500 text-sm mt-1">Ditolak</p>
+      </div>
+    </div>
+
+    <!-- Form PR -->
+    <div id="form" class="bg-white rounded-2xl shadow-sm p-8 mb-8 fade-in">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">Ajukan Purchase Request</h2>
+      <div class="grid grid-cols-2 gap-6 mb-6">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Barang</label>
+          <input id="nama_barang" type="text" placeholder="contoh: Laptop Dell XPS"
+            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 transition">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Jumlah</label>
+          <input id="jumlah" type="number" placeholder="contoh: 5"
+            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 transition">
+        </div>
+      </div>
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Spesifikasi</label>
+        <textarea id="spesifikasi" placeholder="Jelaskan spesifikasi barang secara detail..."
+          class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 h-28 focus:outline-none focus:border-purple-400 transition resize-none"></textarea>
+      </div>
+      <div class="flex items-center gap-4">
+        <button onclick="ajukanPR()" class="btn-submit text-white px-8 py-3 rounded-xl font-semibold">
+          Kirim Pengajuan →
+        </button>
+        <p id="pesanPR" class="text-sm"></p>
+      </div>
+    </div>
+
+    <!-- Riwayat -->
+    <div id="riwayat" class="bg-white rounded-2xl shadow-sm p-8 fade-in">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">Riwayat Pengajuan</h2>
+      <div id="listPR"><p class="text-gray-400 text-sm">Memuat data...</p></div>
+    </div>
+  </div>
+
+  <script>
+    const { createClient } = supabase
+    const sb = createClient(
+      'https://bgtgeltkbanlnvymalum.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJndGdlbHRrYmFubG52eW1hbHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTAwNDksImV4cCI6MjA5NTA4NjA0OX0.-JlapeQpug44SjkEKgb1wyoX2_ftdGGcAnTHJhdzvwE'
+    )
+    async function cekLogin() {
+      const { data } = await sb.auth.getSession()
+      if (!data.session) { window.location.href = 'index.html'; return }
+      muatPR()
+    }
+    async function ajukanPR() {
+      const { data: s } = await sb.auth.getSession()
+      const userId = s.session.user.id
+      const nama = document.getElementById('nama_barang').value
+      const jumlah = document.getElementById('jumlah').value
+      const spesifikasi = document.getElementById('spesifikasi').value
+      const pesan = document.getElementById('pesanPR')
+      if (!nama || !jumlah || !spesifikasi) {
+        pesan.textContent = '⚠️ Semua kolom wajib diisi!'
+        pesan.className = 'text-red-500 text-sm'
+        return
+      }
+      const { error } = await sb.from('purchase_request').insert({
+        user_id: userId, nama_barang: nama,
+        jumlah: parseInt(jumlah), spesifikasi, status: 'menunggu'
+      })
+      if (error) {
+        pesan.textContent = '❌ Gagal: ' + error.message
+        pesan.className = 'text-red-500 text-sm'
+      } else {
+        pesan.textContent = '✅ Pengajuan berhasil dikirim!'
+        pesan.className = 'text-green-600 text-sm'
+        document.getElementById('nama_barang').value = ''
+        document.getElementById('jumlah').value = ''
+        document.getElementById('spesifikasi').value = ''
+        muatPR()
+      }
+    }
+    async function muatPR() {
+      const { data: s } = await sb.auth.getSession()
+      const userId = s.session.user.id
+      const { data } = await sb.from('purchase_request').select('*')
+        .eq('user_id', userId).order('created_at', { ascending: false })
+      if (data) {
+        document.getElementById('statMenunggu').textContent = data.filter(x => x.status === 'menunggu').length
+        document.getElementById('statDisetujui').textContent = data.filter(x => x.status === 'disetujui').length
+        document.getElementById('statDitolak').textContent = data.filter(x => x.status === 'ditolak').length
+      }
+      const container = document.getElementById('listPR')
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm">Belum ada pengajuan.</p>'
+        return
+      }
+      container.innerHTML = data.map(pr => `
+        <div class="flex items-center justify-between p-4 rounded-xl border-2 border-gray-100 mb-3 hover:border-purple-200 transition">
+          <div>
+            <p class="font-semibold text-gray-800">${pr.nama_barang}</p>
+            <p class="text-sm text-gray-500 mt-1">Jumlah: ${pr.jumlah} unit · ${pr.spesifikasi}</p>
+            <p class="text-xs text-gray-400 mt-1">${new Date(pr.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'})}</p>
+          </div>
+          <span class="text-xs font-bold px-4 py-2 rounded-full status-${pr.status}">
+            ${pr.status.toUpperCase()}
+          </span>
+        </div>
+      `).join('')
+    }
+    async function logout() {
+      await sb.auth.signOut()
+      window.location.href = 'index.html'
+    }
+    cekLogin()
+  </script>
+</body>
+</html>
